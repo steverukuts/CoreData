@@ -1,0 +1,7 @@
+This allows you to convert a C# object graph into a list of SQL INSERT statements that are compatible with databases generated with Apple's CoreData. This is extremely useful when generating fixtures for use with your application. I developed this library for use with a currently unreleased iOS game which requires a great deal of configuration by the designers. This library is a core part of the level editor, and allows the designers to add new items, resources, opponents and so on.
+
+Caveats:
+
+1. The generated SQL assumes that you are starting with a blank database. This will be fixed in the future.
+2. This library assumes a 1:1 mapping between your C# and CoreData classes (although you can ignore C# properties)
+3. I really don't recommend actually sending the generated SQL to iOS clients; it's a really bad programming practice and will probably get you into trouble with Apple when you submit your app to the app store.
