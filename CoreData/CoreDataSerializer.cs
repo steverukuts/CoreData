@@ -159,21 +159,35 @@ namespace CoreData
                         }
                         else
                         {
-                            if (this.ValueConverters.ContainsKey(value.GetType()))
-                            {
-                                ValueConverter converter = this.ValueConverters[value.GetType()];
-                                command.Parameters[property.Name] = converter.Invoke(value);
-                            }
-                            else
-                            {
-                                command.Parameters[property.Name] = Convert.ToString(value);
-                            }
+                            command.Parameters[property.Name] = ConvertValue(value);
                         }
                     }
 
                     yield return command;
                 }
             }
+        }
+
+        /// <summary>
+        /// Checks <see cref="ValueConverters"/> to see if there is a user-supplied function to 
+        /// convert the value. If not, attempt to convert it to a string using the built-in methods.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private string ConvertValue(object value)
+        {
+            if (this.ValueConverters.ContainsKey(value.GetType()))
+            {
+                ValueConverter converter = this.ValueConverters[value.GetType()];
+                return converter.Invoke(value);
+            }
+
+            if (value is Enum)
+            {
+                return Convert.ToString(Convert.ToInt32(value));
+            }
+
+            return Convert.ToString(value);
         }
 
         /// <summary>

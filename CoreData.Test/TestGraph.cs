@@ -12,6 +12,14 @@ namespace CoreData.Test
     /// </summary>
     public static class TestGraph
     {
+        public enum WorkerStatus
+        {
+            Manager,
+            Supervisor,
+            Director,
+            Normal
+        }
+
         public class Factory
         {
             public IEnumerable<Worker> Workers { get; set; }
@@ -26,6 +34,7 @@ namespace CoreData.Test
             public Department CurrentDepartment { get; set; }
             public IEnumerable<Worker> Friends { get; set; }
             public DateTime HireDate { get; set; }
+            public WorkerStatus Status { get; set; }
 
             [IgnoreDataMember]
             public string Password { get; set; }

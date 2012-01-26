@@ -50,5 +50,15 @@ namespace CoreData.Test
             CoreDataCommand command = commands.First();
             Assert.AreEqual("", command.Parameters["Name"]);
         }
+
+        [TestMethod]
+        public void TestSerializeEnum()
+        {
+            TestGraph.Worker arthur = new TestGraph.Worker {Name = "Arthur", Status = TestGraph.WorkerStatus.Normal};
+            CoreDataSerializer serializer = new CoreDataSerializer(arthur);
+
+            CoreDataCommand command = serializer.Commands.First();
+            Assert.AreEqual("3", command.Parameters["Status"]);
+        }
     }
 }
