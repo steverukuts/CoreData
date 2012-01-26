@@ -8,8 +8,8 @@
     <ProjectGuid>{BBF5984A-FA53-47F2-A362-62B2E1142D2B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SpaceAgeEditor.Document.CoreData</RootNamespace>
-    <AssemblyName>SpaceAgeEditor.Document.CoreData</AssemblyName>
+    <RootNamespace>CoreData</RootNamespace>
+    <AssemblyName>CoreData</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
