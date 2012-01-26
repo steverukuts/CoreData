@@ -50,6 +50,8 @@
     <Compile Include="ObjectGraphTest.cs" />
     <Compile Include="PrimaryKeyCollectionTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SerializerDataTypeConverterTest.cs" />
+    <Compile Include="TestGraph.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CoreData\CoreData.csproj">

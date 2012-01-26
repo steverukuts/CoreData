@@ -98,5 +98,18 @@ namespace CoreData.Test
             ObjectGraph graph = new ObjectGraph(shop);
             graph.Collapse();
         }
+
+        /// <summary>
+        /// Regression test for a crash that would occur when attempting to walk an array of structs.
+        /// </summary>
+        [TestMethod]
+        public void TestArrayOfStructsException()
+        {
+            TestGraph.Worker arthur = new TestGraph.Worker { Name = "Arthur", Image = new byte[] { 0, 1, 2, 3, 4, 5 } };
+            ObjectGraph graph = new ObjectGraph(arthur) { IncludeReferenceTypes = true };
+            IEnumerable<object> objects = graph.Collapse();
+
+            Assert.AreEqual(6, objects.Count(item => item is byte));
+        }
     }
 }

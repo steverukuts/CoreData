@@ -9,94 +9,10 @@ namespace CoreData.Test
     [TestClass]
     public class CoreDataSerializerTest
     {
-        private class Factory
-        {
-            public IEnumerable<Worker> Workers { get; set; }
-            public IEnumerable<Department> Departments { get; set; } 
-            public string Name { get; set; }
-        }
-
-        private class Worker
-        {
-            public string Name { get; set; }
-            public float Salary { get; set; }
-            public Department Department { get; set; }
-            public IEnumerable<Worker> Friends { get; set; }
-            public DateTime HireDate { get; set; }
-
-            [IgnoreDataMember]
-            public string Password { get; set; }
-
-            public byte[] Image { get; set; }
-
-            public bool IsEnabled { get; set; }
-
-            /// <summary>
-            /// We should be checking for duplicates using reference value, not GetHashCode.
-            /// </summary>
-            /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new Random().Next();
-            }
-        }
-
-        private class Department
-        {
-            public string Name { get; set; }
-            public IEnumerable<Worker> Workers { get; set; } 
-        }
-
-        private static Factory GetSimpleGraph()
-        {
-            return new Factory
-                       {
-                           Name = "Magrathea",
-                           Workers = new[]
-                               {
-                                   new Worker {Name = "Arthur"},
-                                   new Worker {Name = "Marvin"},
-                                   new Worker {Name = "Zaphod"}
-                               }
-                       };
-        }
-
-        private static Factory GetDuplicateReferenceGraph()
-        {
-            Worker arthur = new Worker {Name = "Arthur"};
-            Worker marvin = new Worker {Name = "Marvin"};
-            Worker zaphod = new Worker {Name = "Zaphod"};
-
-            Department sales = new Department {Name = "Sales", Workers = new[] {arthur, marvin}};
-            Department engineering = new Department {Name = "Engineering", Workers = new[] {marvin, zaphod}};
-
-            return new Factory
-                       {
-                           Name = "Magrathea",
-                           Workers = new[] {arthur, marvin, zaphod},
-                           Departments = new[] {sales, engineering}
-                       };
-        }
-
-        private static Factory GetRecursiveGraph()
-        {
-            Worker arthur = new Worker {Name = "Arthur"};
-            arthur.Friends = new[] {arthur};
-
-            Department sales = new Department {Name = "Sales", Workers = new[] {arthur}};
-            arthur.Department = sales;
-            
-            return new Factory
-                       {
-                           Name = "Magrathea",
-                           Workers = new[] {arthur}
-                       };
-        }
-
         [TestMethod]
         public void TestCollapseNodeGraphCount()
         {
-            Factory graph = GetSimpleGraph();
+            TestGraph.Factory graph = TestGraph.GetSimpleGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph);
             Assert.AreEqual(4, serializer.GraphNodes.Count());
         }
@@ -104,7 +20,7 @@ namespace CoreData.Test
         [TestMethod]
         public void TestNodeGraphCollapseContents()
         {
-            Factory graph = GetSimpleGraph();
+            TestGraph.Factory graph = TestGraph.GetSimpleGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph);
             Assert.IsTrue(serializer.GraphNodes.Contains(graph));
             Assert.IsTrue(serializer.GraphNodes.Contains(graph.Workers.First()));
@@ -113,7 +29,7 @@ namespace CoreData.Test
         [TestMethod]
         public void TestCollapseNodeGraphDuplicateReferences()
         {
-            Factory graph = GetDuplicateReferenceGraph();
+            TestGraph.Factory graph = TestGraph.GetDuplicateReferenceGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph);
             Assert.AreEqual(6, serializer.GraphNodes.Count());
         }
@@ -121,7 +37,7 @@ namespace CoreData.Test
         [TestMethod]
         public void TestCollapseNodeGraphRecursion()
         {
-            Factory graph = GetRecursiveGraph();
+            TestGraph.Factory graph = TestGraph.GetRecursiveGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph);
             Assert.AreEqual(3, serializer.GraphNodes.Count());
         }
@@ -129,9 +45,9 @@ namespace CoreData.Test
         [TestMethod]
         public void TestIgnoreTypes()
         {
-            Factory graph = GetRecursiveGraph();
+            TestGraph.Factory graph = TestGraph.GetRecursiveGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph);
-            serializer.IgnoredTypes.Add(typeof (Worker));
+            serializer.IgnoredTypes.Add(typeof (TestGraph.Worker));
             serializer.Refresh();
             Assert.AreEqual(1, serializer.GraphNodes.Count());
         }
@@ -146,7 +62,7 @@ namespace CoreData.Test
         [TestMethod]
         public void TestGetFactoryCommand()
         {
-            Factory emptyFactory = new Factory {Name = "Magrathea"};
+            TestGraph.Factory emptyFactory = new TestGraph.Factory {Name = "Magrathea"};
             CoreDataSerializer serializer = new CoreDataSerializer(emptyFactory);
             IEnumerable<CoreDataCommand> commands = serializer.Commands;
             CoreDataCommand command = commands.First();
@@ -158,55 +74,44 @@ namespace CoreData.Test
         [TestMethod]
         public void TestBackwardRelation()
         {
-            Worker arthur = new Worker {Name = "Arthur"};
-            Department sales = new Department {Name = "sales", Workers = new[] {arthur}};
-            arthur.Department = sales;
+            TestGraph.Worker arthur = new TestGraph.Worker {Name = "Arthur"};
+            TestGraph.Department sales = new TestGraph.Department {Name = "sales", Workers = new[] {arthur}};
+            arthur.CurrentDepartment = sales;
 
             CoreDataSerializer serializer = new CoreDataSerializer(sales);
             IEnumerable<CoreDataCommand> commands = serializer.Commands.ToList();
             Assert.AreEqual(2, commands.Count());
 
             CoreDataCommand workerCommand = commands.First(command => command.ObjectName == "Worker");
-            Assert.AreEqual("1", workerCommand.Parameters["Department"]);
-        }
-
-        [TestMethod]
-        public void TestSerializeNullValue()
-        {
-            Worker arthur = new Worker { Name = null };
-            CoreDataSerializer serializer = new CoreDataSerializer(arthur);
-
-            IEnumerable<CoreDataCommand> commands = serializer.Commands.ToList();
-            CoreDataCommand command = commands.First();
-            Assert.AreEqual("", command.Parameters["Name"]);
+            Assert.AreEqual("1", workerCommand.Parameters["CurrentDepartment"]);
         }
 
         [TestMethod]
         public void TestTypeList()
         {
-            Factory graph = GetSimpleGraph();
+            TestGraph.Factory graph = TestGraph.GetSimpleGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph);
             Assert.AreEqual(2, serializer.Types.Count());
-            Assert.IsTrue(serializer.Types.Contains(typeof(Worker)));
-            Assert.IsTrue(serializer.Types.Contains(typeof(Factory)));
+            Assert.IsTrue(serializer.Types.Contains(typeof(TestGraph.Worker)));
+            Assert.IsTrue(serializer.Types.Contains(typeof(TestGraph.Factory)));
         }
 
         [TestMethod]
         public void TestIgnoreRoot()
         {
-            Factory graph = GetSimpleGraph();
+            TestGraph.Factory graph = TestGraph.GetSimpleGraph();
             CoreDataSerializer serializer = new CoreDataSerializer(graph) {IgnoreRoot = true};
             serializer.Refresh();
 
             Assert.AreEqual(3, serializer.GraphNodes.Count());
-            Assert.IsTrue(serializer.Types.Contains(typeof(Worker)));
-            Assert.IsFalse(serializer.Types.Contains(typeof(Factory)));
+            Assert.IsTrue(serializer.Types.Contains(typeof(TestGraph.Worker)));
+            Assert.IsFalse(serializer.Types.Contains(typeof(TestGraph.Factory)));
         }
 
         [TestMethod]
         public void TestIgnoreDataMember()
         {
-            Worker arthur = new Worker {Name = "Arthur", Password = "12345"};
+            TestGraph.Worker arthur = new TestGraph.Worker {Name = "Arthur", Password = "12345"};
             CoreDataSerializer serializer = new CoreDataSerializer(arthur);
 
             IEnumerable<CoreDataCommand> commands = serializer.Commands.ToList();
@@ -216,57 +121,13 @@ namespace CoreData.Test
         }
 
         /// <summary>
-        /// Regression test for a crash that would occur when attempting to walk an array of structs.
-        /// </summary>
-        [TestMethod]
-        public void TestArrayOfStructsException()
-        {
-            Worker arthur = new Worker { Name = "Arthur", Image = new byte[] {0, 1, 2, 3, 4, 5}};
-            ObjectGraph graph = new ObjectGraph(arthur) {IncludeReferenceTypes = true};
-            IEnumerable<object> objects = graph.Collapse();
-
-            Assert.AreEqual(6, objects.Count(item => item is byte));
-        }
-
-        [TestMethod]
-        public void TestDateTimeOutput()
-        {
-            Worker arthur = new Worker {Name = "Arthur", HireDate = new DateTime(2001, 01, 01, 08, 0, 0)};
-            CoreDataSerializer serializer = new CoreDataSerializer(arthur);
-
-            CoreDataCommand command = serializer.Commands.First();
-            Assert.AreEqual("28800", command.Parameters["HireDate"]);
-        }
-
-        [TestMethod]
-        public void TestBooleanOutput()
-        {
-            Worker arthur = new Worker {Name = "Arthur", IsEnabled = true};
-            CoreDataSerializer serializer = new CoreDataSerializer(arthur);
-
-            CoreDataCommand command = serializer.Commands.First();
-            Assert.AreEqual("1", command.Parameters["IsEnabled"]);
-        }
-
-        [TestMethod]
-        public void TestCustomConverter()
-        {
-            Worker arthur = new Worker {Name = "Arthur"};
-            CoreDataSerializer serializer = new CoreDataSerializer(arthur);
-            serializer.ValueConverters[typeof (string)] = value => Convert.ToString(value) + " 1234";
-            
-            CoreDataCommand command = serializer.Commands.First();
-            Assert.AreEqual("Arthur 1234", command.Parameters["Name"]);
-        }
-
-        /// <summary>
         /// Regression test for an issue where the default value converter dictionary itself was
         /// copied to ValueConverters instead of a copy of the dictionary.
         /// </summary>
         [TestMethod]
         public void TestDefaultsAreNotModified()
         {
-            Worker arthur = new Worker { Name = "Arthur" };
+            TestGraph.Worker arthur = new TestGraph.Worker { Name = "Arthur" };
 
             int defaultConverters = CoreDataSerializer.DefaultValueConverters.Count;
 
