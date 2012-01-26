@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CoreData;
 
-namespace SpaceAgeTests
+namespace CoreData.Test
 {
     [TestClass]
     public class ObjectGraphTest
