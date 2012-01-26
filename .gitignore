@@ -1,0 +1,10 @@
+CoreData/bin
+CoreData/obj
+CoreData.Test/bin
+CoreData.Test/obj
+_Resharper.CoreData
+TestResults
+CoreData.suo
+CoreData/CoreData.6.0.ReSharper.user
+CoreData/CoreData.sln.docstates.suo
+CoreData/CoreData.suo
